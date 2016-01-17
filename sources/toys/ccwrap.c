@@ -157,7 +157,7 @@ enum {
 // Read the command line arguments and work out status
 int main(int argc, char *argv[])
 {
-  char *topdir, *ccprefix, *dynlink, *cc, *temp, **keepv, **hdr, **outv;
+  char *topdir, *ccprefix, *dynlink, *cc = NULL, *temp, **keepv, **hdr, **outv;
   int i, keepc, srcfiles, flags, outc;
   struct dlist *libs = 0;
 
@@ -252,11 +252,11 @@ int main(int argc, char *argv[])
   // Override header/library search path with environment variable?
   temp = getenv("CCWRAP_TOPDIR");
   if (!temp) {
-    cc = xmprintf("%sCCWRAP_TOPDIR", ccprefix);
+    char *icc = xmprintf("%sCCWRAP_TOPDIR", ccprefix);
 
-    for (i=0; cc[i]; i++) if (cc[i] == '-') cc[i]='_';
-    temp = getenv(cc);
-    free(cc);
+    for (i=0; icc[i]; i++) if (icc[i] == '-') icc[i]='_';
+    temp = getenv(icc);
+    free(icc);
   }
   if (temp) {
     free(topdir);
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
   }
 
   // Name of the C compiler we're wrapping.
-  cc = getenv("CCWRAP_CC");
+  if (!cc) cc = getenv("CCWRAP_CC");
   if (!cc) cc = "rawcc";
 
   // Does toolchain have a shared libcc?

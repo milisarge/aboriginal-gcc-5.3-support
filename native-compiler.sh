@@ -33,10 +33,16 @@ then
 fi
 
 # Build binutils, gcc, and ccwrap
-
-build_section binutils
-[ ! -z "$ELF2FLT" ] && build_section elf2flt
-build_section gcc
+if [ -z "$ENABLE_GPLV3" ]
+then
+  build_section binutils
+  [ ! -z "$ELF2FLT" ] && build_section elf2flt
+  build_section gcc
+else
+  build_section binutils binutils-gplv3
+  [ ! -z "$ELF2FLT" ] && build_section elf2flt
+  build_section gcc gcc-gplv3
+fi
 build_section ccwrap
 
 # Tell future packages to link against the libraries in the new compiler,
@@ -46,9 +52,9 @@ export "$(echo $ARCH | sed 's/-/_/g')"_CCWRAP_TOPDIR="$STAGE_DIR"
 
 if [ ! -z "$KARCH" ]
 then
-  # Add C++ standard library
+  # Add C++ standard library (if we didnt build one in GCC 5.3)
 
-  [ -z "$NO_CPLUSPLUS" ] && build_section uClibc++
+  [ -z "$NO_CPLUSPLUS" ] && [ -z "$ENABLE_GPLV3" ] && build_section uClibc++
 
   # For a native compiler, build make, bash, and distcc.  (Yes, this is an old
   # version of Bash.  It's intentional.)

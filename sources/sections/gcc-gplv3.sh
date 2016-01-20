@@ -2,7 +2,7 @@
 setupfor gmp
 setupfor mpfr
 setupfor mpc
-setupfor gcc
+setupfor gcc gcc-gplv3
 
 mv ${WORK}/gmp  ${WORK}/gcc
 mv ${WORK}/mpfr ${WORK}/gcc

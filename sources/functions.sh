@@ -93,26 +93,37 @@ load_target()
 
 # Note that this sources the file, rather than calling it as a separate
 # process.  That way it can set environment variables if it wants to.
-
+#
+# If $2 is given, it is used as a variant name for the build script
+# and patches instead of $1, $2 is essentially a variant of the
+# package $1 and allows basic support for multiple versions of the
+# same package.
 build_section()
 {
+  PACKAGE_NAME=$1
+  PACKAGE_VARIANT=$1
+  if [ ! -z "$2" ]
+  then
+    PACKAGE_VARIANT=$2
+  fi
+
   # Don't build anything statically in host-tools, glibc is broken.
   # See http://people.redhat.com/drepper/no_static_linking.html for
   # insane rant from the glibc maintainer about why he doesn't care.
-  is_in_list $1 $BUILD_STATIC && [ ! -z "$ARCH" ] && STATIC_FLAGS="--static"
+  is_in_list $PACKAGE_NAME $BUILD_STATIC && [ ! -z "$ARCH" ] && STATIC_FLAGS="--static"
 
   OLDCPUS=$CPUS
   OLDNOCLEAN=$NO_CLEANUP
-  is_in_list $1 $DEBUG_PACKAGE && CPUS=1 && NO_CLEANUP=1
+  is_in_list $PACKAGE_NAME $DEBUG_PACKAGE && CPUS=1 && NO_CLEANUP=1
 
-  if [ -e "$SOURCES/sections/$1".build ]
+  if [ -e "$SOURCES/sections/$PACKAGE_VARIANT".build ]
   then
-    setupfor "$1"
-    . "$SOURCES/sections/$1".build
+    setupfor "$PACKAGE_NAME" "$PACKAGE_VARIANT"
+    . "$SOURCES/sections/$PACKAGE_VARIANT".build
     cleanup
   else
-    announce "$1"
-    . "$SOURCES"/sections/"$1".sh
+    announce "$PACKAGE_NAME"
+    . "$SOURCES"/sections/"$PACKAGE_VARIANT".sh
   fi
   CPUS=$OLDCPUS
   NO_CLEANUP=$OLDNOCLEAN
@@ -200,14 +211,24 @@ blank_workdir()
 }
 
 # Extract package $1
-
+#
+# If $2 is specified it is a variant of the package, as such
+# the variant name will be used as a basename for the patches instead
+# of $1
 setupfor()
 {
   export WRAPPY_LOGPATH="$BUILD/logs/cmdlines.${ARCH_NAME}.${STAGE_NAME}.setupfor"
 
+  PACKAGE_NAME=$1
+  PACKAGE_VARIANT=$1
+  if [ ! -z "$2" ]
+  then
+    PACKAGE_VARIANT=$2
+  fi
+
   # Make sure the source is already extracted and up-to-date.
-  extract_package "$1" || exit 1
-  SNAPFROM="$(package_cache "$1")"
+  extract_package "$PACKAGE_NAME" "$PACKAGE_VARIANT" || exit 1
+  SNAPFROM="$(package_cache "$PACKAGE_NAME")"
 
   # Delete old working copy (even in the NO_CLEANUP case) then make a new
   # tree of links to the package cache.
@@ -227,7 +248,7 @@ setupfor()
   done
 
   cd "$CURSRC" || dienow
-  export WRAPPY_LOGPATH="$BUILD/logs/cmdlines.${ARCH_NAME}.${STAGE_NAME}.$1"
+  export WRAPPY_LOGPATH="$BUILD/logs/cmdlines.${ARCH_NAME}.${STAGE_NAME}.$PACKAGE_NAME"
 
   # Ugly bug workaround: timestamp granularity in a lot of filesystems is only
   # 1 second, so find -newer misses things installed in the same second, so we

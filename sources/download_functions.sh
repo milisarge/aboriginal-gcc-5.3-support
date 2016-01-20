@@ -52,7 +52,7 @@ noversion()
 
 gather_patches()
 {
-  ls "$PATCHDIR/${PACKAGE}"-*.patch 2> /dev/null | sort | while read i
+  ls "$PATCHDIR/${PACKAGE_VARIANT}"-*.patch 2> /dev/null | sort | while read i
   do
     if [ -f "$i" ]
     then
@@ -61,9 +61,9 @@ gather_patches()
   done
 
   # gather external package patches sorted by filename
-  if [ ! -z "$MY_PATCH_DIR" ] && [ -d "${MY_PATCH_DIR}/${PACKAGE}" ]
+  if [ ! -z "$MY_PATCH_DIR" ] && [ -d "${MY_PATCH_DIR}/${PACKAGE_VARIANT}" ]
   then
-    for i in "${MY_PATCH_DIR}/${PACKAGE}/"*.patch
+    for i in "${MY_PATCH_DIR}/${PACKAGE_VARIANT}/"*.patch
     do
       if [ -f "$i" ]
       then
@@ -129,14 +129,19 @@ package_cache()
 # Extract tarball named in $1 and apply all relevant patches into
 # "$BUILD/packages/$1".  Record sha1sum of tarball and patch files in
 # sha1-for-source.txt.  Re-extract if tarball or patches change.
-
+#
+# If $2 is specified it is a variant of the package, as such
+# the variant name will be used as a basename for the patches instead
+# of $1
 extract_package()
 {
   mkdir -p "$SRCTREE" || dienow
 
-  # Announce to the world that we're cracking open a new package
-
   PACKAGE="$1"
+  PACKAGE_VARIANT="$1"
+  [ ! -z "$2" ] && PACKAGE_VARIANT=$2
+
+  # Announce to the world that we're cracking open a new package
   announce "$PACKAGE"
 
   ! is_in_list "PACKAGE" "$IGNORE_REPOS" && [ -d "$SRCDIR/$PACKAGE" ] &&

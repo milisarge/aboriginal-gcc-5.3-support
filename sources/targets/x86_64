@@ -6,7 +6,7 @@ Modern standard PC architecture.  Runs i686 code as well.
 
 KARCH=x86_64
 KERNEL_PATH=arch/${KARCH}/boot/bzImage
-GCC_FLAGS=
+GCC_FLAGS="--disable-libcilkrts"
 BINUTILS_FLAGS="--enable-64-bit-bfd"
 QEMU_TEST=
 
